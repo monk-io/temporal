@@ -308,7 +308,7 @@ func workerFailureResponse(message string) *matchingservice.DispatchNexusTaskRes
 }
 
 func handlerErrorResponse(errType nexus.HandlerErrorType, message string) *matchingservice.DispatchNexusTaskResponse {
-	// Simulate the response shape that DispatchResponseToError converts into a HandlerError.
+	// Simulate the response shape that MatchingDispatchResponseToError converts into a HandlerError.
 	// For handler-level errors, matching returns a Response with a StartOperation failure
 	// containing the error type in the failure metadata.
 	handlerErr := nexus.NewHandlerErrorf(errType, "%s", message)

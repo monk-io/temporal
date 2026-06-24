@@ -90,7 +90,7 @@ func DispatchToWorker(
 		return err
 	}
 
-	nexusErr := commonnexus.DispatchResponseToError(resp)
+	nexusErr := commonnexus.MatchingDispatchResponseToError(resp)
 	if nexusErr == nil {
 		metrics.WorkerCommandsSent.With(metricsHandler).Record(1, metrics.OutcomeTag("success"))
 		return nil

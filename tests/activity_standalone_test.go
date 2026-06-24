@@ -31,6 +31,7 @@ import (
 	"go.temporal.io/server/common/nexus/nexusrpc"
 	"go.temporal.io/server/common/payload"
 	"go.temporal.io/server/common/payloads"
+	"go.temporal.io/server/common/searchattribute/sadefs"
 	"go.temporal.io/server/common/tasktoken"
 	"go.temporal.io/server/common/testing/await"
 	"go.temporal.io/server/common/testing/parallelsuite"
@@ -73,7 +74,7 @@ var (
 	}
 	defaultSearchAttributes = &commonpb.SearchAttributes{
 		IndexedFields: map[string]*commonpb.Payload{
-			"CustomKeywordField": payload.EncodeString("value1"),
+			"CustomKeywordField": sadefs.MustEncodeValue("value1", enumspb.INDEXED_VALUE_TYPE_KEYWORD),
 		},
 	}
 	defaultUserMetadata = &sdkpb.UserMetadata{
@@ -700,7 +701,7 @@ func (s *standaloneActivityTestSuite) TestStart() {
 		t.Run("SearchAttributesInvalid", func(t *testing.T) {
 			invalidSearchAttributes := &commonpb.SearchAttributes{
 				IndexedFields: map[string]*commonpb.Payload{
-					"InvalidSearchAttributeKey": payload.EncodeString("value"),
+					"InvalidSearchAttributeKey": sadefs.MustEncodeValue("value", enumspb.INDEXED_VALUE_TYPE_KEYWORD),
 				},
 			}
 
@@ -887,7 +888,8 @@ func (s *standaloneActivityTestSuite) TestStart() {
 		require.NoError(t, err)
 		expected := append([]*commonpb.Link{}, firstLinks...)
 		expected = append(expected, secondLinks...)
-		protorequire.ProtoSliceEqual(t, expected, descResp.GetInfo().GetLinks())
+		// Links across requests are stored in a map keyed by request ID, so their relative order is non-deterministic.
+		protorequire.ProtoElementsMatch(t, expected, descResp.GetInfo().GetLinks())
 	})
 
 	t.Run("AttachLinksOnConflictStoresRawInput", func(t *testing.T) {
@@ -4844,7 +4846,7 @@ func (s *standaloneActivityTestSuite) TestListActivityExecutions() {
 			RequestId:           env.Tv().RequestID(),
 			SearchAttributes: &commonpb.SearchAttributes{
 				IndexedFields: map[string]*commonpb.Payload{
-					customSAName: payload.EncodeString(customSAValue),
+					customSAName: sadefs.MustEncodeValue(customSAValue, enumspb.INDEXED_VALUE_TYPE_KEYWORD),
 				},
 			},
 		})
@@ -5086,7 +5088,7 @@ func (s *standaloneActivityTestSuite) TestCountActivityExecutions() {
 				RequestId:           env.Tv().RequestID(),
 				SearchAttributes: &commonpb.SearchAttributes{
 					IndexedFields: map[string]*commonpb.Payload{
-						customSAName: payload.EncodeString(customSAValue),
+						customSAName: sadefs.MustEncodeValue(customSAValue, enumspb.INDEXED_VALUE_TYPE_KEYWORD),
 					},
 				},
 			})
