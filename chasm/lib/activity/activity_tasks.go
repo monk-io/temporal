@@ -313,8 +313,8 @@ func (h *cancelCommandDispatchTaskHandler) Validate(
 ) (bool, error) {
 	// Valid if the activity is in a state where it has been requested to cancel or terminated
 	// (meaning it was running on a worker when the cancel/terminate was issued).
-	return activity.Status == activitypb.ACTIVITY_EXECUTION_STATUS_CANCEL_REQUESTED ||
-		activity.Status == activitypb.ACTIVITY_EXECUTION_STATUS_TERMINATED, nil
+	return activity.GetStatus() == activitypb.ACTIVITY_EXECUTION_STATUS_CANCEL_REQUESTED ||
+		activity.GetStatus() == activitypb.ACTIVITY_EXECUTION_STATUS_TERMINATED, nil
 }
 
 const cancelCommandDispatchTimeout = time.Second * 10 * debug.TimeoutMultiplier
