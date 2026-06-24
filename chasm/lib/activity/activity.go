@@ -664,10 +664,6 @@ func (a *Activity) handleCancellationRequested(ctx chasm.MutableContext, request
 		return nil, err
 	}
 
-	if !isCancelImmediately {
-		a.addCancelCommandDispatchTask(ctx)
-	}
-
 	if isCancelImmediately {
 		details := &commonpb.Payloads{
 			Payloads: []*commonpb.Payload{
@@ -687,6 +683,8 @@ func (a *Activity) handleCancellationRequested(ctx chasm.MutableContext, request
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		a.addCancelCommandDispatchTask(ctx)
 	}
 
 	return &activitypb.RequestCancelActivityExecutionResponse{}, nil
