@@ -30,9 +30,9 @@ func NewWorkflowTaskToken(
 	}
 }
 
-// NewCHASMActivityTaskToken builds a task token for a CHASM (standalone) activity.
-// CHASM activities don't use ScheduledEventId, Clock, Version, or StartVersion.
-func NewCHASMActivityTaskToken(
+// NewStandaloneActivityTaskToken builds a task token for a standalone activity.
+// Standalone activities don't use ScheduledEventId, Clock, Version, or StartVersion.
+func NewStandaloneActivityTaskToken(
 	namespaceID string,
 	workflowID string,
 	runID string,
