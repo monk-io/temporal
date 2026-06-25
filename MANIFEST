@@ -1,0 +1,7 @@
+REPO temporal
+
+LOAD monk/temporal.yaml
+LOAD monk/temporal-example.yaml
+LOAD monk/temporal-stack.yaml
+
+ENTRY temporal/stack-local

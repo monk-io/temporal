@@ -1,0 +1,166 @@
+namespace: temporal
+
+example-postgres:
+  defines: runnable
+  inherits: postgresql/db
+  metadata:
+    name: Temporal example PostgreSQL
+    description: Local example PostgreSQL database composing Temporal component with the catalog postgresql/db package.
+    tags: temporal, postgres, example, local
+  variables:
+    db_user:
+      env: POSTGRES_USER
+      type: string
+      value: temporal
+      description: PostgreSQL user for local Temporal example.
+    db_pass:
+      env: POSTGRES_PASSWORD
+      type: string
+      value: temporal-local-postgres
+      description: Local-only PostgreSQL password for automated verification; secure inheritors use secret("temporal-postgres-password").
+    db_name:
+      env: POSTGRES_DB
+      type: string
+      value: temporal
+      description: Initial PostgreSQL database name for local Temporal example.
+  services:
+    postgres:
+      description: Internal PostgreSQL service used by Temporal local example.
+      container: postgres
+      port: 5432
+      protocol: tcp
+
+example-elasticsearch:
+  defines: runnable
+  inherits: elasticsearch/base
+  metadata:
+    name: Temporal example Elasticsearch
+    description: Local example Elasticsearch visibility store composing Temporal component with the catalog elasticsearch/base package.
+    tags: temporal, elasticsearch, visibility, example, local
+  variables:
+    cluster-name:
+      type: string
+      value: temporal-example-es
+      description: Elasticsearch cluster name for local Temporal example.
+      env: cluster.name
+    security-enabled:
+      type: bool
+      value: false
+      description: Disable Elasticsearch security for local automated verification only.
+      env: xpack.security.enabled
+    http-ssl-enabled:
+      type: bool
+      value: false
+      description: Disable Elasticsearch HTTP TLS for local automated verification only.
+      env: xpack.security.http.ssl.enabled
+    elastic-password:
+      type: string
+      value: ""
+      description: Sensitive Elasticsearch bootstrap password intentionally empty for local example with security disabled.
+      env: ELASTIC_PASSWORD
+    heap-size:
+      type: string
+      value: "512m"
+      description: Elasticsearch JVM heap size for local example.
+    data-path:
+      type: string
+      value: <- `${monk-volume-path}/temporal-example/elasticsearch`
+      description: Host-side persistent data path for local Elasticsearch example.
+  services:
+    http:
+      description: Internal Elasticsearch HTTP service used by Temporal local example visibility.
+      container: elasticsearch
+      port: 9200
+      protocol: tcp
+    transport:
+      description: Internal Elasticsearch transport service retained for completeness.
+      container: elasticsearch
+      port: 9300
+      protocol: tcp
+
+example-server:
+  defines: runnable
+  inherits: temporal/base
+  metadata:
+    name: Temporal component example server
+    description: Local Temporal server example wired to catalog PostgreSQL and Elasticsearch packages.
+    tags: temporal, server, example, local, postgres, elasticsearch
+  connections:
+    database:
+      runnable: temporal/example-postgres
+      service: postgres
+    elasticsearch:
+      runnable: temporal/example-elasticsearch
+      service: http
+  depends:
+    wait-for:
+      runnables:
+        - temporal/example-postgres
+        - temporal/example-elasticsearch
+  variables:
+    postgres_password:
+      env: POSTGRES_PWD
+      type: string
+      value: temporal-local-postgres
+      description: Local-only PostgreSQL password matching example-postgres.
+    postgres_seeds:
+      env: POSTGRES_SEEDS
+      type: string
+      value: <- connection-hostname("database")
+      description: PostgreSQL hostname supplied by Monk connection.
+    enable_es:
+      env: ENABLE_ES
+      type: string
+      value: "true"
+      description: Enables Elasticsearch visibility for local component example.
+    es_seeds:
+      env: ES_SEEDS
+      type: string
+      value: <- connection-hostname("elasticsearch")
+      description: Elasticsearch hostname supplied by Monk connection.
+    es_version:
+      env: ES_VERSION
+      type: string
+      value: v7
+      description: Elasticsearch compatibility version used by Temporal visibility.
+
+example-ui:
+  defines: runnable
+  inherits: temporal/ui
+  metadata:
+    name: Temporal component example UI
+    description: Local Temporal UI example connected to example Temporal server and published for external verification.
+    tags: temporal, ui, example, local
+  connections:
+    temporal:
+      runnable: temporal/example-server
+      service: frontend
+  depends:
+    wait-for:
+      runnables:
+        - temporal/example-server
+  variables:
+    temporal_address:
+      env: TEMPORAL_ADDRESS
+      type: string
+      value: <- connection-hostname("temporal") ":7233" concat-all
+      description: Temporal frontend address built from Monk connection.
+  services:
+    http:
+      description: Locally published Temporal Web UI HTTP service for component example verification.
+      container: ui
+      port: 8080
+      protocol: tcp
+      host-port: 18088
+
+example-local:
+  defines: process-group
+  metadata:
+    name: Temporal component local example
+    description: Local component example composing Temporal server, UI, PostgreSQL, and Elasticsearch.
+    tags: temporal, example, local, postgres, elasticsearch
+  runnable-list:
+    - temporal/example-postgres
+    - temporal/example-elasticsearch
+    - temporal/example-server
+    - temporal/example-ui

@@ -1,0 +1,179 @@
+namespace: temporal
+
+base:
+  defines: runnable
+  metadata:
+    name: Temporal component base
+    description: |
+      Reusable Temporal server component. This base does not include concrete persistence
+      or visibility backing services; inheriting templates must provide PostgreSQL and,
+      when Elasticsearch visibility is enabled, Elasticsearch through Monk connections.
+      Compatible catalog packages include postgresql/db and elasticsearch/base.
+    tags: temporal, workflows, orchestration, durable-execution, component
+    website: https://temporal.io/
+    source: https://github.com/temporalio/temporal
+    publisher: monk.io
+    icon: https://temporal.io/favicon.ico
+  variables:
+    temporal_image_tag:
+      type: string
+      value: "1.28.1"
+      description: Public temporalio/auto-setup image tag run.
+    db:
+      env: DB
+      type: string
+      value: postgres12_pgx
+      description: Temporal SQL plugin name. Inheritors usually keep postgres12_pgx for PostgreSQL.
+    db_name:
+      env: DBNAME
+      type: string
+      value: temporal
+      description: Temporal default persistence database name.
+    visibility_db_name:
+      env: VISIBILITY_DBNAME
+      type: string
+      value: temporal_visibility
+      description: Temporal SQL visibility database name when Elasticsearch visibility is disabled.
+    postgres_user:
+      env: POSTGRES_USER
+      type: string
+      value: temporal
+      description: PostgreSQL user for Temporal persistence; inheritors set to match their backing service.
+    postgres_password:
+      env: POSTGRES_PWD
+      type: string
+      value: <- secret("temporal-postgres-password")
+      description: Sensitive PostgreSQL password; set when inheriting or deploying secure stacks.
+    postgres_seeds:
+      env: POSTGRES_SEEDS
+      type: string
+      value: ""
+      description: PostgreSQL hostname from a Monk connection; inheritors set with connection-hostname.
+    postgres_port:
+      env: POSTGRES_PORT
+      type: string
+      value: "5432"
+      description: PostgreSQL service port used by Temporal persistence.
+    db_port:
+      env: DB_PORT
+      type: string
+      value: <- $postgres_port
+      description: SQL database port consumed by Temporal bootstrap scripts.
+    enable_es:
+      env: ENABLE_ES
+      type: string
+      value: "false"
+      description: Enables Elasticsearch visibility store when set to true.
+    es_version:
+      env: ES_VERSION
+      type: string
+      value: v7
+      description: Elasticsearch protocol version string consumed by Temporal visibility config.
+    es_seeds:
+      env: ES_SEEDS
+      type: string
+      value: ""
+      description: Elasticsearch hostname from a Monk connection; inheritors set when enable_es is true.
+    es_port:
+      env: ES_PORT
+      type: string
+      value: "9200"
+      description: Elasticsearch HTTP service port used by Temporal visibility.
+    es_scheme:
+      env: ES_SCHEME
+      type: string
+      value: http
+      description: Elasticsearch HTTP scheme.
+    es_user:
+      env: ES_USER
+      type: string
+      value: ""
+      description: Elasticsearch username; set when backing Elasticsearch has security enabled.
+    es_password:
+      env: ES_PWD
+      type: string
+      value: ""
+      description: Sensitive Elasticsearch password; secure inheritors should use secret("temporal-es-password").
+    es_visibility_index:
+      env: ES_VIS_INDEX
+      type: string
+      value: temporal_visibility_v1_dev
+      description: Elasticsearch visibility index name used by Temporal.
+    dynamic_config_file_path:
+      env: DYNAMIC_CONFIG_FILE_PATH
+      type: string
+      value: config/dynamicconfig/development-sql.yaml
+      description: Dynamic config file bundled in the public Temporal image.
+    temporal_address:
+      env: TEMPORAL_ADDRESS
+      type: string
+      value: "127.0.0.1:7233"
+      description: Temporal frontend address used by admin tools inside the server container.
+  containers:
+    temporal:
+      image: temporalio/auto-setup
+      image-tag: <- $temporal_image_tag
+      check:
+        readiness:
+          code:
+            - temporal
+            - operator
+            - cluster
+            - health
+            - --address
+            - 127.0.0.1:7233
+          period: 10
+          initialDelay: 120
+          interval: 10
+  services:
+    frontend:
+      description: Temporal frontend gRPC service for SDK clients, CLI, and UI.
+      container: temporal
+      port: 7233
+      protocol: tcp
+
+ui:
+  defines: runnable
+  metadata:
+    name: Temporal UI component
+    description: Reusable Temporal Web UI component connected to a Temporal frontend service by Monk connection.
+    tags: temporal, ui, workflows, component
+    website: https://temporal.io/
+    source: https://github.com/temporalio/ui
+    publisher: monk.io
+    icon: https://temporal.io/favicon.ico
+  variables:
+    temporal_ui_image_tag:
+      type: string
+      value: "2.40.1"
+      description: Public temporalio/ui image tag run.
+    temporal_address:
+      env: TEMPORAL_ADDRESS
+      type: string
+      value: ""
+      description: Temporal frontend host:port from a Monk connection.
+    temporal_cors_origins:
+      env: TEMPORAL_CORS_ORIGINS
+      type: string
+      value: http://localhost:18088
+      description: Allowed browser origins for local Temporal UI access.
+  containers:
+    ui:
+      image: temporalio/ui
+      image-tag: <- $temporal_ui_image_tag
+      check:
+        readiness:
+          code:
+            - wget
+            - -q
+            - --spider
+            - http://localhost:8080/
+          period: 10
+          initialDelay: 30
+          interval: 10
+  services:
+    http:
+      description: Temporal Web UI HTTP service.
+      container: ui
+      port: 8080
+      protocol: tcp
