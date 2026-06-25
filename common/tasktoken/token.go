@@ -31,9 +31,7 @@ func NewWorkflowTaskToken(
 }
 
 // NewCHASMActivityTaskToken builds a task token for a CHASM (standalone) activity.
-// CHASM activities don't use ScheduledEventId, Clock, Version, or StartVersion — those
-// are workflow mutable state concepts. This helper ensures matching (poll token) and
-// worker commands (cancel/pause token) stay in sync.
+// CHASM activities don't use ScheduledEventId, Clock, Version, or StartVersion.
 func NewCHASMActivityTaskToken(
 	namespaceID string,
 	workflowID string,

@@ -3245,7 +3245,7 @@ func (e *matchingEngineImpl) createPollActivityTaskQueueResponse(
 			historyResponse.GetClock(),
 			historyResponse.GetVersion(),
 			historyResponse.GetStartVersion(),
-			nil, // componentRef
+			nil,
 		)
 	}
 	serializedToken, _ := e.tokenSerializer.Serialize(taskToken)
