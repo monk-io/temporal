@@ -2698,18 +2698,9 @@ func (s *standaloneActivityTestSuite) TestDispatchCancelCommandToWorker() {
 	cancelCmd := executeReq.Commands[0].GetCancelActivity()
 	require.NotNil(t, cancelCmd, "expected CancelActivity command")
 
-	// The cancel command token identifies the same activity but is not byte-identical to the poll
-	// response token (the poll token includes additional fields like Clock, Version). Verify by
-	// deserializing and comparing the activity-identifying fields.
-	serializer := tasktoken.NewSerializer()
-	pollToken, err := serializer.Deserialize(activityPollResp.TaskToken)
-	require.NoError(t, err)
-	cancelToken, err := serializer.Deserialize(cancelCmd.TaskToken)
-	require.NoError(t, err)
-	require.Equal(t, pollToken.NamespaceId, cancelToken.NamespaceId)
-	require.Equal(t, pollToken.ActivityId, cancelToken.ActivityId)
-	require.Equal(t, pollToken.ActivityType, cancelToken.ActivityType)
-	require.Equal(t, pollToken.Attempt, cancelToken.Attempt)
+	// The cancel command token must be byte-identical to the poll token because the SDK
+	// uses exact byte match to look up the activity to cancel.
+	require.Equal(t, activityPollResp.TaskToken, cancelCmd.TaskToken)
 }
 
 func (s *standaloneActivityTestSuite) TestTerminate() {

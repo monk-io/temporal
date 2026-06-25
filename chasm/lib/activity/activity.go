@@ -18,7 +18,6 @@ import (
 	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/server/api/historyservice/v1"
 	"go.temporal.io/server/api/matchingservice/v1"
-	tokenspb "go.temporal.io/server/api/token/v1"
 	"go.temporal.io/server/chasm"
 	"go.temporal.io/server/chasm/lib/activity/gen/activitypb/v1"
 	"go.temporal.io/server/chasm/lib/callback"
@@ -26,6 +25,7 @@ import (
 	"go.temporal.io/server/common"
 	"go.temporal.io/server/common/backoff"
 	"go.temporal.io/server/common/contextutil"
+	"go.temporal.io/server/common/tasktoken"
 	"go.temporal.io/server/common/metrics"
 	"go.temporal.io/server/common/namespace"
 	commonnexus "go.temporal.io/server/common/nexus"
@@ -214,8 +214,6 @@ func (a *Activity) createAddActivityTaskRequest(ctx chasm.Context, namespaceID s
 }
 
 // buildCancelCommandTaskToken builds the serialized task token for a cancel command.
-// This token identifies the same activity as the poll response token but is not byte-identical —
-// matching builds poll tokens with additional fields (Clock, Version, etc.).
 func (a *Activity) buildCancelCommandTaskToken(ctx chasm.Context, activityRef chasm.ComponentRef) ([]byte, error) {
 	componentRefBytes, err := ctx.Ref(a)
 	if err != nil {
@@ -225,13 +223,15 @@ func (a *Activity) buildCancelCommandTaskToken(ctx chasm.Context, activityRef ch
 	attempt := a.LastAttempt.Get(ctx)
 	key := ctx.ExecutionKey()
 
-	token := &tokenspb.Task{
-		NamespaceId:  key.NamespaceID,
-		ActivityId:   key.BusinessID,
-		ActivityType: a.GetActivityType().GetName(),
-		Attempt:      attempt.GetCount(),
-		ComponentRef: componentRefBytes,
-	}
+	token := tasktoken.NewCHASMActivityTaskToken(
+		key.NamespaceID,
+		key.BusinessID, // workflowID — for standalone activities, BusinessID is the ActivityId
+		key.RunID,
+		key.BusinessID, // activityId
+		a.GetActivityType().GetName(),
+		attempt.GetCount(),
+		componentRefBytes,
+	)
 
 	return token.Marshal()
 }
