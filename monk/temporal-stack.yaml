@@ -50,6 +50,14 @@ stack-postgres:
       type: string
       value: temporal
       description: Initial PostgreSQL database name for Temporal persistence.
+  containers:
+    postgres:
+      mounted-volumes:
+        postgres-data:
+          path: /var/lib/postgresql/data
+  volumes:
+    postgres-data:
+      kind: local
   services:
     postgres:
       description: Internal PostgreSQL service used by secure Temporal stack.
@@ -89,10 +97,14 @@ stack-elasticsearch:
       type: string
       value: "1g"
       description: Elasticsearch JVM heap size for secure Temporal stack.
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/temporal-stack/elasticsearch`
-      description: Host-side persistent data path for secure Temporal stack Elasticsearch.
+  containers:
+    elasticsearch:
+      mounted-volumes:
+        elasticsearch-data:
+          path: /usr/share/elasticsearch/data
+  volumes:
+    elasticsearch-data:
+      kind: local
   services:
     http:
       description: Internal Elasticsearch HTTP service used by secure Temporal stack visibility.
@@ -225,10 +237,6 @@ local-elasticsearch:
       type: string
       value: "512m"
       description: Elasticsearch JVM heap size for local stack verification.
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/temporal-stack-local/elasticsearch`
-      description: Host-side persistent data path for local stack Elasticsearch.
 
 local-server:
   defines: runnable
