@@ -2,7 +2,7 @@ namespace: temporal
 
 example-postgres:
   defines: runnable
-  inherits: postgresql/db
+  inherits: postgresql/db-v17
   metadata:
     name: Temporal example PostgreSQL
     description: Local example PostgreSQL database composing Temporal component with the catalog postgresql/db package.
@@ -23,14 +23,6 @@ example-postgres:
       type: string
       value: temporal
       description: Initial PostgreSQL database name for local Temporal example.
-  containers:
-    postgres:
-      mounted-volumes:
-        postgres-data:
-          path: /var/lib/postgresql/data
-  volumes:
-    postgres-data:
-      kind: local
   services:
     postgres:
       description: Internal PostgreSQL service used by Temporal local example.
@@ -70,14 +62,6 @@ example-elasticsearch:
       type: string
       value: "512m"
       description: Elasticsearch JVM heap size for local example.
-  containers:
-    elasticsearch:
-      mounted-volumes:
-        elasticsearch-data:
-          path: /usr/share/elasticsearch/data
-  volumes:
-    elasticsearch-data:
-      kind: local
   services:
     http:
       description: Internal Elasticsearch HTTP service used by Temporal local example visibility.

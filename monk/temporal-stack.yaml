@@ -29,7 +29,7 @@ stack-local:
 
 stack-postgres:
   defines: runnable
-  inherits: postgresql/db
+  inherits: postgresql/db-v17
   metadata:
     name: Temporal stack PostgreSQL
     description: PostgreSQL persistence database for secure standalone Temporal stack.
@@ -50,14 +50,6 @@ stack-postgres:
       type: string
       value: temporal
       description: Initial PostgreSQL database name for Temporal persistence.
-  containers:
-    postgres:
-      mounted-volumes:
-        postgres-data:
-          path: /var/lib/postgresql/data
-  volumes:
-    postgres-data:
-      kind: local
   services:
     postgres:
       description: Internal PostgreSQL service used by secure Temporal stack.
@@ -97,14 +89,6 @@ stack-elasticsearch:
       type: string
       value: "1g"
       description: Elasticsearch JVM heap size for secure Temporal stack.
-  containers:
-    elasticsearch:
-      mounted-volumes:
-        elasticsearch-data:
-          path: /usr/share/elasticsearch/data
-  volumes:
-    elasticsearch-data:
-      kind: local
   services:
     http:
       description: Internal Elasticsearch HTTP service used by secure Temporal stack visibility.
