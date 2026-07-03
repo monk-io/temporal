@@ -29,7 +29,7 @@ stack-local:
 
 stack-postgres:
   defines: runnable
-  inherits: postgresql/db
+  inherits: postgresql/db-v17
   metadata:
     name: Temporal stack PostgreSQL
     description: PostgreSQL persistence database for secure standalone Temporal stack.
@@ -89,10 +89,6 @@ stack-elasticsearch:
       type: string
       value: "1g"
       description: Elasticsearch JVM heap size for secure Temporal stack.
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/temporal-stack/elasticsearch`
-      description: Host-side persistent data path for secure Temporal stack Elasticsearch.
   services:
     http:
       description: Internal Elasticsearch HTTP service used by secure Temporal stack visibility.
@@ -225,10 +221,6 @@ local-elasticsearch:
       type: string
       value: "512m"
       description: Elasticsearch JVM heap size for local stack verification.
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/temporal-stack-local/elasticsearch`
-      description: Host-side persistent data path for local stack Elasticsearch.
 
 local-server:
   defines: runnable

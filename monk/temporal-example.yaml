@@ -2,7 +2,7 @@ namespace: temporal
 
 example-postgres:
   defines: runnable
-  inherits: postgresql/db
+  inherits: postgresql/db-v17
   metadata:
     name: Temporal example PostgreSQL
     description: Local example PostgreSQL database composing Temporal component with the catalog postgresql/db package.
@@ -62,10 +62,6 @@ example-elasticsearch:
       type: string
       value: "512m"
       description: Elasticsearch JVM heap size for local example.
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/temporal-example/elasticsearch`
-      description: Host-side persistent data path for local Elasticsearch example.
   services:
     http:
       description: Internal Elasticsearch HTTP service used by Temporal local example visibility.
